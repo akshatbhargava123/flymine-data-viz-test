@@ -6,6 +6,9 @@
     "node": true,
     "jest": true
 	},
+	"globals": {
+		"imjs": true
+	},
 	"extends": [
     "eslint:recommended",
     "prettier"
