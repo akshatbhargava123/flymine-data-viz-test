@@ -1,43 +1,14 @@
 const Plotly = require('plotly.js/lib/core');
+const queryData = require('./queryData');
 
 Plotly.register([require('plotly.js/lib/bar')]);
 
-const makeQuery = args => ({
-	from: 'Gene',
-	select: [
-		'secondaryIdentifier',
-		'symbol',
-		'microArrayResults.mRNASignal',
-		'microArrayResults.mRNASignalSEM',
-		'microArrayResults.presentCall',
-		'microArrayResults.enrichment',
-		'microArrayResults.affyCall',
-		'microArrayResults.dataSets.name',
-		'microArrayResults.tissue.name'
-	],
-	orderBy: [
-		{
-			path: 'secondaryIdentifier',
-			direction: 'ASC'
-		}
-	],
-	where: [
-		{
-			path: 'microArrayResults',
-			type: 'FlyAtlasResult'
-		},
-		{
-			path: 'organism.name',
-			op: '=',
-			value: args.orgName
-		},
-		{
-			path: 'Gene',
-			op: 'LOOKUP',
-			value: args.geneId
-		}
-	]
-});
+const getHoverText = (affCall, signal, enrichment) => {
+	let regulationText = 'Same as Whole Fly';
+	if (affCall === 'Up') regulationText = 'Up Regulated';
+	else if (affCall === 'Down') regulationText = 'Down Regulated';
+	return `${regulationText}: (<b>signal: ${signal}, enrichment: ${enrichment}</b>)`;
+};
 
 const getColor = affyCall => {
 	if (!affyCall || affyCall === 'None') return '#7E3CB5';
@@ -51,13 +22,13 @@ function main(el, service, imEntity, state, config) {
 		throw new Error('Call main with correct signature');
 	}
 
-	const flymine = new imjs.Service({ root: service.root });
-	const query = makeQuery({
-		orgName: imEntity.orgName,
-		geneId: imEntity.value
-	});
-
-	flymine.records(query).then(function(records) {
+	queryData(
+		{
+			orgName: imEntity.orgName,
+			geneId: imEntity.value
+		},
+		service.root
+	).then(records => {
 		const results = records[0].microArrayResults;
 		results.sort((r1, r2) => {
 			const textA = r1.tissue.name.toUpperCase();
@@ -68,12 +39,16 @@ function main(el, service, imEntity, state, config) {
 		const chartData = {
 			enrichments: [],
 			tissueNames: [],
-			colors: []
+			colors: [],
+			hoverTexts: []
 		};
 		results.forEach(result => {
 			chartData.enrichments.push(Math.log2(Number(result.enrichment)));
 			chartData.tissueNames.push(result.tissue.name);
 			chartData.colors.push(getColor(result.affyCall));
+			chartData.hoverTexts.push(
+				getHoverText(result.affCall, result.mRNASignal, result.enrichment)
+			);
 		});
 
 		Plotly.newPlot(
@@ -84,9 +59,14 @@ function main(el, service, imEntity, state, config) {
 					y: chartData.tissueNames,
 					type: 'bar',
 					orientation: 'h',
-					ygap: 1,
 					marker: {
 						color: chartData.colors
+					},
+					hoverinfo: 'x+text',
+					text: chartData.hoverTexts,
+					hoverlabel: {
+						bgcolor: '#FFFFFF',
+						bordercolor: '#000000'
 					}
 				}
 			],
@@ -115,13 +95,11 @@ function main(el, service, imEntity, state, config) {
 					showgrid: true,
 					automargin: true
 				}
+			},
+			{
+				displayModeBar: false
 			}
 		);
-
-		// console.log('No. of rows: ' + rows.length);
-		// rows.forEach(function printRow(row) {
-		// 	console.log(row);
-		// });
 	});
 }
 
