@@ -1,9 +1,7 @@
 #  Flymine Expression Visualizer
 
-FIXME: fill out a description of your tool here! :)
-
-## Licence
-
+Replica of Data viz shown under Expression section at Flymine.
+Example [here](http://www.flymine.org/flymine/portal.do?class=Gene&externalids=FBgn0004053)
 
 ### To set up locally for development
 
