@@ -4,13 +4,14 @@
     "es6": true,
     "jquery": true,
     "node": true,
-    "jest": true
+		"jest": true
 	},
 	"globals": {
 		"imjs": true
 	},
 	"extends": [
-    "eslint:recommended",
+		"eslint:recommended",
+		"plugin:react/recommended",
     "prettier"
   ],
   "plugins": [
@@ -26,6 +27,7 @@
 		"quotes": ["error", "single"],
 		"semi": ["error", "always"],
     "prettier/prettier": "error",
-    "comma-dangle": ["error", "never"]
+		"comma-dangle": ["error", "never"],
+		"react/prop-types": 0
   }
 }
